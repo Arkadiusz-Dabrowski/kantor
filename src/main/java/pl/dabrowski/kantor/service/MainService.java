@@ -1,17 +1,17 @@
 package pl.dabrowski.kantor.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
+import pl.dabrowski.kantor.GetJsons;
 import pl.dabrowski.kantor.MainRepository;
 import pl.dabrowski.kantor.entity.JsonValues;
+import pl.dabrowski.kantor.entity.Rate;
 import pl.dabrowski.kantor.entity.RatePerYear;
+import retrofit.Call;
+import retrofit.GsonConverterFactory;
+import retrofit.Response;
+import retrofit.Retrofit;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -20,72 +20,70 @@ public class MainService {
 
     MainRepository repository;
 
-    private String url = "http://api.nbp.pl/api/exchangerates/rates/a/eur/2010-01-01/2010-12-31?format=json";
 
 
-    MainService(MainRepository repository) {
+
+    MainService(MainRepository repository)  {
         this.repository = repository;
     }
 
-    private String getJsonsForYear(String year) throws IOException {
-    String newUrl = (Integer.valueOf(year) == 2019) ? url.replace("2010-01-01", "2019-01-01").replace("2010-12-31", LocalDate.now().toString()) : url.replace("2010", year);
-            URL url = new URL(newUrl);
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(url.openStream()));
+    public void execute(){
+        if(!repository.existsRatePerYearByYear("2018")){
+            for(int i = 2010; i<2020; i++){
 
-        String inputLine = "";
-        String jsons = "";
-        while ((inputLine = in.readLine()) != null)
-            jsons = inputLine;
-        in.close();
-        jsons = jsons.substring(jsons.indexOf("["));
-        return jsons;
-    }
-
-    private List<JsonValues> convertJsonsToClass(int n) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        List<JsonValues> values;
-        values = mapper.readValue(getJsonsForYear(String.valueOf(n)), new TypeReference<List<JsonValues>>(){});
-        return values;
-    }
-
-    private double averageValueFromJsons(int n) throws IOException {
-        double averageValue  = 0.0;
-        for (JsonValues j: convertJsonsToClass(n)
-        ) {
-            averageValue += Double.parseDouble(j.getMid());
+                  String year = String.valueOf(i);
+                Double averagePerYear = calculateAvarage(year);
+                RatePerYear ratePerYear = new RatePerYear(i, averagePerYear);
+                repository.save(ratePerYear);
+            }
+        }else {
+               String year = String.valueOf(2019);
+            Double averagePerYear = calculateAvarage(year);
+            RatePerYear ratePerYear = new RatePerYear(2019, averagePerYear);
+            repository.save(ratePerYear);
         }
-        return averageValue/convertJsonsToClass(n).size();
     }
 
-    private RatePerYear jsonListToRatePerYear(int n) {
-        RatePerYear ratePerYear = null;
+
+        private Double calculateAvarage(String year) {
+
+            List<Double> mids = getMid(year);
+           Double average =  mids.stream().mapToDouble(a -> a).average().getAsDouble();
+            return average;
+        }
+
+        public List<RatePerYear> getAllValues () {
+            return repository.findAll();
+        }
+
+    public List<Double> getMid(String year) {
+        List<Double> mid = new ArrayList();
+        Retrofit retroFit = new Retrofit.Builder().baseUrl("http://api.nbp.pl").addConverterFactory(GsonConverterFactory.create()).build();
+        GetJsons getJsons = retroFit.create(GetJsons.class);
+        Call<JsonValues> call;
+        if(year.compareTo("2019") != 0) {
+             call = getJsons.list(year);
+        } else{
+             call = getJsons.list2(year, LocalDate.now().toString());
+        }
+        Response<JsonValues> response = null;
         try {
-            ratePerYear = new RatePerYear(n, String.valueOf(n), averageValueFromJsons(n));
+            response = call.execute();
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return ratePerYear;
-    }
+        List<Rate> rates = response.body().getRates();
+        if(rates.get(0).getNo().compareTo("001/A/NBP/2019") == 0) {
+            repository.save(new RatePerYear(0,"Obecna wartość", rates.get(rates.size()-1).getMid()));
+        }
+        rates.stream().forEach(rate ->
+            mid.add(rate.getMid())
+        );
 
-    private void saveRates(int n)  {
-        if(n != 2019 && !repository.existsRatePerYearByYear(n))
-            repository.save(jsonListToRatePerYear(n));
-        if(n ==2019)
-            repository.save(jsonListToRatePerYear(n));
-
-    }
-
-    public void readValuesForYear()  {
-        for (int i = 2010; i < 2020; i++) {
-            saveRates(i);
+        return mid;
         }
     }
 
-        public List<RatePerYear> getAllValues(){
-            return repository.findAll();
-        }
-    }
 
 
 

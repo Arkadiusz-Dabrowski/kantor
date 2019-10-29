@@ -1,34 +1,55 @@
 package pl.dabrowski.kantor.entity;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
+import java.util.List;
+
 public class JsonValues {
 
-    private String no;
+    @SerializedName("table")
+    @Expose
+    private String table;
+    @SerializedName("currency")
+    @Expose
+    private String currency;
+    @SerializedName("code")
+    @Expose
+    private String code;
+    @SerializedName("rates")
+    @Expose
+    private List<Rate> rates = null;
 
-    private String effectiveDate;
-
-    private String mid;
-
-    public String getNo() {
-        return no;
+    public String getTable() {
+        return table;
     }
 
-    public void setNo(String no) {
-        this.no = no;
+    public void setTable(String table) {
+        this.table = table;
     }
 
-    public String getEffectiveDate() {
-        return effectiveDate;
-   }
-
-    public void setEffectiveDate(String effectiveDate) {
-        this.effectiveDate = effectiveDate;
+    public String getCurrency() {
+        return currency;
     }
 
-    public String getMid() {
-        return mid;
+    public void setCurrency(String currency) {
+        this.currency = currency;
     }
 
-    public void setMid(String mid) {
-        this.mid = mid;
+    public String getCode() {
+        return code;
     }
+
+    public void setCode(String code) {
+        this.code = code;
+    }
+
+    public List<Rate> getRates() {
+        return rates;
+    }
+
+    public void setRates(List<Rate> rates) {
+        this.rates = rates;
+    }
+
 }

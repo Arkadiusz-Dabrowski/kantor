@@ -19,6 +19,6 @@ public class Schedule {
 
     @Scheduled(fixedRate=24*60*60*1000)
     public void doScheduledTask(){
-        mainService.readValuesForYear();
+        mainService.execute();
     }
 }

@@ -17,7 +17,12 @@ public class RatePerYear {
     public RatePerYear() {
     }
 
-    public RatePerYear(int id, String year, double averageForYear) {
+    public RatePerYear(int id, double averageForYear) {
+        this.id = id;
+        this.year = String.valueOf(id);
+        this.rateForYear = averageForYear;
+    }
+    public RatePerYear(int id,String year, double averageForYear) {
         this.id = id;
         this.year = year;
         this.rateForYear = averageForYear;

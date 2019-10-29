@@ -10,6 +10,6 @@ import pl.dabrowski.kantor.entity.RatePerYear;
 public interface MainRepository extends MongoRepository<RatePerYear,Integer> {
 
 
-    boolean existsRatePerYearByYear(int year);
+    boolean existsRatePerYearByYear(String year);
 
 }
