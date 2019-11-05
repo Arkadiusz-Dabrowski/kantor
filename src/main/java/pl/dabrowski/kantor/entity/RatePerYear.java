@@ -1,18 +1,16 @@
 package pl.dabrowski.kantor.entity;
-
-import org.springframework.data.annotation.Id;
-
-import java.util.Date;
+import org.springframework.data.mongodb.core.index.IndexDirection;
+import org.springframework.data.mongodb.core.index.Indexed;
 
 
 public class RatePerYear {
 
-    @Id
-    int id;
+    @Indexed(unique=true, direction= IndexDirection.DESCENDING, dropDups = true)
+    private int id;
 
-    String year;
+    private String year;
 
-    double rateForYear;
+    private double rateForYear;
 
     public RatePerYear() {
     }
